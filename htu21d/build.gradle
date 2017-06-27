@@ -1,19 +1,23 @@
 apply plugin: 'com.android.library'
+apply plugin: 'jacoco'
 
 def versionMajor = 0
 def versionMinor = 1
 
 android {
-    compileSdkVersion rootProject.compileSdkVersion
-    buildToolsVersion rootProject.buildToolsVersion
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
     defaultConfig {
-        minSdkVersion rootProject.minSdkVersion
-        targetSdkVersion rootProject.targetSdkVersion
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode versionMajor * 10 + versionMinor
         versionName "${versionMajor}.${versionMinor}"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
+        debug {
+            testCoverageEnabled !project.hasProperty('android.injected.invoked.from.ide')
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
@@ -25,9 +29,15 @@ android {
     }
 }
 
+jacoco {
+    toolVersion = "0.7.9"
+}
+
 dependencies {
-    compileOnly 'com.google.android.things:androidthings:' + rootProject.androidThingsVersion
+    implementation 'com.google.android.things:androidthings:' + rootProject.androidThingsVersion
     implementation 'com.android.support:support-annotations:' + rootProject.supportLibVersion
     testImplementation 'junit:junit:' + rootProject.jUnitVersion
+    testImplementation 'org.hamcrest:hamcrest-library:' + rootProject.hamcrestVersion
     testImplementation 'org.mockito:mockito-core:' + rootProject.mockitoVersion
+    androidTestImplementation 'com.android.support:support-annotations:' + rootProject.supportLibVersion
 }

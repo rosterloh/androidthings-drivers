@@ -149,54 +149,184 @@ public class Htu21d implements AutoCloseable {
     }
 
     /**
-     * Read the current temperature.
-     * @return the current temperature in degrees Celsius
+     * Read the current temperature while holding the master.
+     * @return the measured temperature in degrees Celsius
+     * @throws IOException if read fails
+     * @throws IllegalStateException if bus is not open
      */
     public float readTemperature() throws IOException, IllegalStateException {
-        int rawTemp = readSample(HTU21D_REG_TEMP_NO_HOLD);
+        return readTemperature(true);
+    }
+
+    /**
+     * Read the current temperature.
+     * @param hold will hold the I2C master while processing the result
+     * @return the measured temperature in degrees Celsius
+     * @throws IOException if read fails
+     * @throws IllegalStateException if bus is not open
+     */
+    public float readTemperature(boolean hold) throws IOException, IllegalStateException {
+        int rawTemp;
+
+        if (hold) {
+            rawTemp = readSampleWithHold(HTU21D_REG_TEMP_HOLD);
+        } else {
+            rawTemp = readSampleWithoutHold(HTU21D_REG_TEMP_NO_HOLD);
+        }
+
         return compensateTemperature(rawTemp);
     }
 
     /**
-     * Read the current relative humidity.
-     * @return the relative humidity in % units
+     * Read the current relative humidity while holding the master.
+     * @return the measured relative humidity in % units
      * @throws IOException if read fails
+     * @throws IllegalStateException if bus is not open
      */
     public float readHumidity() throws IOException, IllegalStateException {
-        int rawHum = readSample(HTU21D_REG_HUM_NO_HOLD);
+        return readHumidity(true);
+    }
+
+    /**
+     * Read the current relative humidity.
+     * @param hold will hold the I2C master while processing the result
+     * @return the measured relative humidity in % units
+     * @throws IOException if read fails
+     * @throws IllegalStateException if bus is not open
+     */
+    public float readHumidity(boolean hold) throws IOException, IllegalStateException {
+        int rawHum;
+
+        if (hold) {
+            rawHum = readSampleWithHold(HTU21D_REG_HUM_HOLD);
+        } else {
+            rawHum = readSampleWithoutHold(HTU21D_REG_HUM_NO_HOLD);
+        }
+
         return compensateHumidity(rawHum);
     }
 
     /**
-     * Read the current temperature and humidity.
+     * Read the current temperature and humidity while holding the master.
      * @return a 2-element array. The first element is temperature in degrees Celsius, and the
      * second is relative humidity in %.
      * @throws IOException if read fails
+     * @throws IllegalStateException if bus is not open
      */
     public float[] readTemperatureAndHumidity() throws IOException, IllegalStateException {
-        int rawTemp = readSample(HTU21D_REG_TEMP_NO_HOLD);
-        float temperature = compensateTemperature(rawTemp);
-        int rawHumidity = readSample(HTU21D_REG_HUM_NO_HOLD);
-        float humidity = compensateHumidity(rawHumidity);
+        return readTemperatureAndHumidity(true);
+    }
+
+    /**
+     * Read the current temperature and humidity.
+     * @param hold will hold the I2C master while processing the result
+     * @return a 2-element array. The first element is temperature in degrees Celsius, and the
+     * second is relative humidity in %.
+     * @throws IOException if read fails
+     * @throws IllegalStateException if bus is not open
+     */
+    public float[] readTemperatureAndHumidity(boolean hold) throws IOException, IllegalStateException {
+        int rawTemp, rawHumidity;
+        float temperature, humidity;
+
+        if (hold) {
+            rawTemp = readSampleWithHold(HTU21D_REG_TEMP_HOLD);
+            temperature = compensateTemperature(rawTemp);
+            rawHumidity = readSampleWithHold(HTU21D_REG_HUM_HOLD);
+            humidity = compensateHumidity(rawHumidity);
+        } else {
+            rawTemp = readSampleWithHold(HTU21D_REG_TEMP_NO_HOLD);
+            temperature = compensateTemperature(rawTemp);
+            rawHumidity = readSampleWithHold(HTU21D_REG_HUM_NO_HOLD);
+            humidity = compensateHumidity(rawHumidity);
+        }
+
         return new float[]{temperature, humidity};
     }
 
     /**
-     * Reads 16 bits from the given address.
-     * @throws IOException if read fails
+     * Reads a 14 bit sample while holding the master. See datasheet page 11
+     * @param address location of address to read
+     * @return register value
+     * @throws IOException if address fails to read
+     * @throws IllegalStateException if bus is not open
      */
-    private int readSample(int address) throws IOException, IllegalStateException {
+    private int readSampleWithHold(int address) throws IOException, IllegalStateException {
         if (mDevice == null) {
             throw new IllegalStateException("I2C device not open");
         }
 
         synchronized (mBuffer) {
-            mDevice.readRegBuffer(address, mBuffer, 2);
-            // msb[7:0] lsb[7:0]
-            int msb = mBuffer[0] & 0xff;
-            int lsb = mBuffer[1] & 0xff;
-            return (msb << 8 | lsb);
+            try {
+                mDevice.readRegBuffer(address, mBuffer, 3);
+            } catch (IOException e) {
+                // NACK can occur after 2nd byte to omit crc. See datasheet page 12
+                return ((mBuffer[0] & 0xff) << 8) | (mBuffer[1] & 0xfc);
+            }
+            long crc = calculateCRC8(new byte[]{mBuffer[0], mBuffer[1]});
+            if ((((byte) crc) & 0xff) == (mBuffer[2] & 0xff)) {
+                // msb[7:0] lsb[7:2]
+                int msb = mBuffer[0] & 0xff;
+                int lsb = mBuffer[1] & 0xfc;
+                return (msb << 8 | lsb) >> 2;
+            } else {
+                throw new IOException("CRC check failed " + (((byte) crc) & 0xff) + " != " + (mBuffer[2] & 0xff));
+            }
         }
+    }
+
+    /**
+     * Reads a 14 bit sample without holding the master. See datasheet page 11
+     * @param address location of address to read
+     * @return register value
+     * @throws IOException if address fails to read
+     * @throws IllegalStateException if bus is not open
+     */
+    private int readSampleWithoutHold(int address) throws IOException, IllegalStateException {
+        if (mDevice == null) {
+            throw new IllegalStateException("I2C device not open");
+        }
+
+        synchronized (mBuffer) {
+            mDevice.write(new byte[]{(byte)address}, 1);
+            for (int i=0; i<50; i++) {
+                try {
+                    mDevice.read(mBuffer, 2);
+                    // msb[7:0] lsb[7:2]
+                    int msb = mBuffer[0] & 0xff;
+                    int lsb = mBuffer[1] & 0xfc; // last 2 bits are status
+                    // Convert to 14 bit integer
+                    return (msb << 8 | lsb) >> 2;
+                } catch (IOException e) {
+                    // "NACK" while device is converting the result
+                }
+            }
+            throw new IOException("Failed to read value from " + address);
+        }
+    }
+
+    /**
+     * Calculates the 8 bit Cyclic redundancy check of the input buffer with polynominal 0x31
+     * @param input buffer of bytes to be checked
+     * @return computed CRC8
+     * @see <a href="https://en.wikipedia.org/wiki/Cyclic_redundancy_check">Cyclic Redundancy Check</a>
+     */
+    @VisibleForTesting
+    static long calculateCRC8(final byte[] input) {
+        int poly = 0x31;
+        int crc = 0;
+        for (int i : input) {
+            crc ^= i;
+            for (int j = 0; j < 8; j++) {
+                if ((crc & 0x80) != 0) {
+                    crc = ((crc << 1) ^ poly);
+                } else {
+                    crc <<= 1;
+                }
+            }
+            crc &= 0xFF;
+        }
+        return crc & 0xFF;
     }
 
     /**
@@ -206,7 +336,7 @@ public class Htu21d implements AutoCloseable {
      */
     @VisibleForTesting
     static float compensateTemperature(int rawTemp) {
-        int temp = ((21965 * (rawTemp & 0xFFFC)) >> 13) - 46850;
+        int temp = ((21965 * rawTemp) >> 13) - 46850;
         return (float) temp / 1000;
     }
 
@@ -217,7 +347,7 @@ public class Htu21d implements AutoCloseable {
      */
     @VisibleForTesting
     static float compensateHumidity(int rawHumidity) {
-        int hum = ((15625 * (rawHumidity & 0xFFFC)) >> 13) - 6000;
+        int hum = ((15625 * rawHumidity) >> 13) - 6000;
         return (float) hum / 1000;
     }
 }

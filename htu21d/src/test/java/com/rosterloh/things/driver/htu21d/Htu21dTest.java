@@ -37,6 +37,14 @@ public class Htu21dTest {
     public ExpectedException mExpectedException = ExpectedException.none();
 
     @Test
+    public void testCRCCalculation() {
+        long crc = Htu21d.calculateCRC8(new byte[]{0x68, 0x3A});
+        Assert.assertEquals(crc, 0x7C);
+        crc = Htu21d.calculateCRC8(new byte[]{0x4E, (byte) 0x85});
+        Assert.assertEquals(crc, 0x6B);
+    }
+
+    @Test
     public void testCompensateTemperature() {
         final float tempResult = Htu21d.compensateTemperature(RAW_TEMPERATURE);
         Assert.assertEquals(tempResult, EXPECTED_TEMPERATURE, EXPECTED_TEMPERATURE * TOLERANCE);
@@ -67,7 +75,15 @@ public class Htu21dTest {
     public void readTemperature() throws IOException {
         Htu21d htu21d = new Htu21d(mI2c);
         htu21d.readTemperature();
-        Mockito.verify(mI2c).readRegBuffer(eq(0xF3), any(byte[].class), eq(2));
+        Mockito.verify(mI2c).readRegBuffer(eq(0xE3), any(byte[].class), eq(3));
+    }
+
+    @Test
+    public void readTemperature_withoutHold() throws IOException {
+        Htu21d htu21d = new Htu21d(mI2c);
+        htu21d.readTemperature(false);
+        Mockito.verify(mI2c).write(eq(new byte[]{(byte)0xF3}), eq(1));
+        Mockito.verify(mI2c).read(any(byte[].class), eq(2));
     }
 
     @Test
@@ -83,7 +99,15 @@ public class Htu21dTest {
     public void readHumidity() throws IOException {
         Htu21d htu21d = new Htu21d(mI2c);
         htu21d.readHumidity();
-        Mockito.verify(mI2c).readRegBuffer(eq(0xF5), any(byte[].class), eq(2));
+        Mockito.verify(mI2c).readRegBuffer(eq(0xE5), any(byte[].class), eq(3));
+    }
+
+    @Test
+    public void readHumidity_withoutHold() throws IOException {
+        Htu21d htu21d = new Htu21d(mI2c);
+        htu21d.readHumidity(false);
+        Mockito.verify(mI2c).write(eq(new byte[]{(byte)0xF5}), eq(1));
+        Mockito.verify(mI2c).read(any(byte[].class), eq(2));
     }
 
     @Test
@@ -99,8 +123,16 @@ public class Htu21dTest {
     public void readTemperatureAndHumidity() throws IOException {
         Htu21d htu21d = new Htu21d(mI2c);
         htu21d.readTemperatureAndHumidity();
-        Mockito.verify(mI2c).readRegBuffer(eq(0xF3), any(byte[].class), eq(2));
-        Mockito.verify(mI2c).readRegBuffer(eq(0xF5), any(byte[].class), eq(2));
+        Mockito.verify(mI2c).readRegBuffer(eq(0xE3), any(byte[].class), eq(3));
+        Mockito.verify(mI2c).readRegBuffer(eq(0xE5), any(byte[].class), eq(3));
+    }
+
+    @Test
+    public void readTemperatureAndHumidity_noHold() throws IOException {
+        Htu21d htu21d = new Htu21d(mI2c);
+        htu21d.readTemperatureAndHumidity(false);
+        Mockito.verify(mI2c).readRegBuffer(eq(0xF3), any(byte[].class), eq(3));
+        Mockito.verify(mI2c).readRegBuffer(eq(0xF5), any(byte[].class), eq(3));
     }
 
     @Test
