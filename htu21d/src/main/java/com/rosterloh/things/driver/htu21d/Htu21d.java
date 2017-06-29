@@ -2,6 +2,7 @@ package com.rosterloh.things.driver.htu21d;
 
 import android.support.annotation.IntDef;
 import android.support.annotation.VisibleForTesting;
+import android.util.Log;
 
 import com.google.android.things.pio.I2cDevice;
 import com.google.android.things.pio.PeripheralManagerService;
@@ -15,8 +16,6 @@ import java.lang.annotation.RetentionPolicy;
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class Htu21d implements AutoCloseable {
-
-    private static final String TAG = Htu21d.class.getSimpleName();
 
     /**
      * Default I2C address for the sensor.
@@ -49,13 +48,12 @@ public class Htu21d implements AutoCloseable {
     /**
      * Sampling mode in bits for temperature and humidity.
      */
-    @Retention(RetentionPolicy.SOURCE)
-    @IntDef({MODE_12_14, MODE_8_12, MODE_10_13, MODE_11_11})
-    public @interface Mode {}
     public static final int MODE_12_14 = 0;
     public static final int MODE_8_12  = 1;
     public static final int MODE_10_13 = 2;
     public static final int MODE_11_11 = 3;
+
+    private static final String TAG = Htu21d.class.getSimpleName();
 
     /**
      * Registers
@@ -71,18 +69,19 @@ public class Htu21d implements AutoCloseable {
     private static final int HTU21D_RESOLUTION_MASK = 0b10000001;
 
     private I2cDevice mDevice;
-    private final int[] mTempCalibrationData = new int[3];
-    private final int[] mPressureCalibrationData = new int[9];
     private final byte[] mBuffer = new byte[3]; // for reading sensor values
-    private boolean mEnabled = false;
     private int mSensorResolution;
+
+    @Retention(RetentionPolicy.SOURCE)
+    @IntDef({MODE_12_14, MODE_8_12, MODE_10_13, MODE_11_11})
+    public @interface Mode {}
 
     /**
      * Create a new HTU21D sensor driver connected on the given bus.
      * @param bus I2C bus the sensor is connected to.
      * @throws IOException if device cannot be opened
      */
-    public Htu21d(String bus) throws IOException {
+    public Htu21d(final String bus) throws IOException {
         this(bus, DEFAULT_I2C_ADDRESS);
     }
 
@@ -92,15 +91,16 @@ public class Htu21d implements AutoCloseable {
      * @param address I2C address of the sensor.
      * @throws IOException if device cannot be opened
      */
-    public Htu21d(String bus, int address) throws IOException {
-        PeripheralManagerService pioService = new PeripheralManagerService();
-        I2cDevice device = pioService.openI2cDevice(bus, address);
+    public Htu21d(final String bus, final int address) throws IOException {
+        final PeripheralManagerService pioService = new PeripheralManagerService();
+        final I2cDevice device = pioService.openI2cDevice(bus, address);
         try {
             connect(device);
-        } catch (IOException|RuntimeException e) {
+        } catch (IOException e) {
             try {
                 close();
-            } catch (IOException|RuntimeException ignored) {
+            } catch (IOException ex) {
+                Log.e(TAG, "Failed to close device");
             }
             throw e;
         }
@@ -111,11 +111,11 @@ public class Htu21d implements AutoCloseable {
      * @param device I2C device of the sensor.
      * @throws IOException if device cannot be opened
      */
-    /*package*/ Htu21d(I2cDevice device) throws IOException {
+    /*package*/ Htu21d(final I2cDevice device) throws IOException {
         connect(device);
     }
 
-    private void connect(I2cDevice device) throws IOException {
+    private void connect(final I2cDevice device) throws IOException {
         mDevice = device;
 
         // Read current resolution of the sensors.
@@ -165,7 +165,7 @@ public class Htu21d implements AutoCloseable {
      * @throws IOException if read fails
      * @throws IllegalStateException if bus is not open
      */
-    public float readTemperature(boolean hold) throws IOException, IllegalStateException {
+    public float readTemperature(final boolean hold) throws IOException, IllegalStateException {
         int rawTemp;
 
         if (hold) {
@@ -194,7 +194,7 @@ public class Htu21d implements AutoCloseable {
      * @throws IOException if read fails
      * @throws IllegalStateException if bus is not open
      */
-    public float readHumidity(boolean hold) throws IOException, IllegalStateException {
+    public float readHumidity(final boolean hold) throws IOException, IllegalStateException {
         int rawHum;
 
         if (hold) {
@@ -225,9 +225,11 @@ public class Htu21d implements AutoCloseable {
      * @throws IOException if read fails
      * @throws IllegalStateException if bus is not open
      */
-    public float[] readTemperatureAndHumidity(boolean hold) throws IOException, IllegalStateException {
-        int rawTemp, rawHumidity;
-        float temperature, humidity;
+    public float[] readTemperatureAndHumidity(final boolean hold) throws IOException, IllegalStateException {
+        int rawTemp;
+        int rawHumidity;
+        float temperature;
+        float humidity;
 
         if (hold) {
             rawTemp = readSampleWithHold(HTU21D_REG_TEMP_HOLD);
@@ -251,7 +253,7 @@ public class Htu21d implements AutoCloseable {
      * @throws IOException if address fails to read
      * @throws IllegalStateException if bus is not open
      */
-    private int readSampleWithHold(int address) throws IOException, IllegalStateException {
+    private int readSampleWithHold(final int address) throws IOException, IllegalStateException {
         if (mDevice == null) {
             throw new IllegalStateException("I2C device not open");
         }
@@ -263,11 +265,11 @@ public class Htu21d implements AutoCloseable {
                 // NACK can occur after 2nd byte to omit crc. See datasheet page 12
                 return ((mBuffer[0] & 0xff) << 8) | (mBuffer[1] & 0xfc);
             }
-            long crc = calculateCRC8(new byte[]{mBuffer[0], mBuffer[1]});
+            final long crc = calculateCRC8(new byte[]{mBuffer[0], mBuffer[1]});
             if ((((byte) crc) & 0xff) == (mBuffer[2] & 0xff)) {
                 // msb[7:0] lsb[7:2]
-                int msb = mBuffer[0] & 0xff;
-                int lsb = mBuffer[1] & 0xfc;
+                final int msb = mBuffer[0] & 0xff;
+                final int lsb = mBuffer[1] & 0xfc;
                 return (msb << 8 | lsb) >> 2;
             } else {
                 throw new IOException("CRC check failed " + (((byte) crc) & 0xff) + " != " + (mBuffer[2] & 0xff));
@@ -282,19 +284,19 @@ public class Htu21d implements AutoCloseable {
      * @throws IOException if address fails to read
      * @throws IllegalStateException if bus is not open
      */
-    private int readSampleWithoutHold(int address) throws IOException, IllegalStateException {
+    private int readSampleWithoutHold(final int address) throws IOException, IllegalStateException {
         if (mDevice == null) {
             throw new IllegalStateException("I2C device not open");
         }
 
         synchronized (mBuffer) {
-            mDevice.write(new byte[]{(byte)address}, 1);
-            for (int i=0; i<50; i++) {
+            mDevice.write(new byte[]{(byte) address}, 1);
+            for (int i = 0; i < 50; i++) {
                 try {
                     mDevice.read(mBuffer, 2);
                     // msb[7:0] lsb[7:2]
-                    int msb = mBuffer[0] & 0xff;
-                    int lsb = mBuffer[1] & 0xfc; // last 2 bits are status
+                    final int msb = mBuffer[0] & 0xff;
+                    final int lsb = mBuffer[1] & 0xfc; // last 2 bits are status
                     // Convert to 14 bit integer
                     return (msb << 8 | lsb) >> 2;
                 } catch (IOException e) {
@@ -313,13 +315,13 @@ public class Htu21d implements AutoCloseable {
      */
     @VisibleForTesting
     static long calculateCRC8(final byte[] input) {
-        int poly = 0x31;
-        int crc = 0;
-        for (int i : input) {
+        final int poly = 0x31;
+        byte crc = 0;
+        for (final byte i : input) {
             crc ^= i;
             for (int j = 0; j < 8; j++) {
                 if ((crc & 0x80) != 0) {
-                    crc = ((crc << 1) ^ poly);
+                    crc = (byte) ((crc << 1) ^ poly);
                 } else {
                     crc <<= 1;
                 }
@@ -335,8 +337,8 @@ public class Htu21d implements AutoCloseable {
      * @return temperature in °C range from -40°C to +125°C
      */
     @VisibleForTesting
-    static float compensateTemperature(int rawTemp) {
-        int temp = ((21965 * rawTemp) >> 13) - 46850;
+    static float compensateTemperature(final int rawTemp) {
+        final int temp = ((21965 * rawTemp) >> 13) - 46850;
         return (float) temp / 1000;
     }
 
@@ -346,8 +348,8 @@ public class Htu21d implements AutoCloseable {
      * @return relative humidity RH% range from 0-100
      */
     @VisibleForTesting
-    static float compensateHumidity(int rawHumidity) {
-        int hum = ((15625 * rawHumidity) >> 13) - 6000;
+    static float compensateHumidity(final int rawHumidity) {
+        final int hum = ((15625 * rawHumidity) >> 13) - 6000;
         return (float) hum / 1000;
     }
 }

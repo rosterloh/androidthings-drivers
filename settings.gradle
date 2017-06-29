@@ -1,1 +1,1 @@
-include ':htu21d'
+include ':htu21d', ':ccs811'

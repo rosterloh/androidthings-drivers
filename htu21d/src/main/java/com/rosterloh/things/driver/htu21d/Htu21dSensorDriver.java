@@ -12,14 +12,12 @@ import java.util.UUID;
 
 public class Htu21dSensorDriver implements AutoCloseable {
 
-    private static final String TAG = Htu21dSensorDriver.class.getSimpleName();
-
     // DRIVER parameters
     // documented at https://source.android.com/devices/sensors/hal-interface.html#sensor_t
     private static final String DRIVER_VENDOR = "TE";
     private static final String DRIVER_NAME = "HTU21D";
 
-    private Htu21d mDevice;
+    private final Htu21d mDevice;
 
     private TemperatureUserDriver mTemperatureUserDriver;
     private HumidityUserDriver mHumidityUserDriver;
@@ -33,7 +31,7 @@ public class Htu21dSensorDriver implements AutoCloseable {
      * @see #registerTemperatureSensor()
      * @see #registerHumiditySensor()
      */
-    public Htu21dSensorDriver(String bus) throws IOException {
+    public Htu21dSensorDriver(final String bus) throws IOException {
         mDevice = new Htu21d(bus);
     }
 
@@ -47,7 +45,7 @@ public class Htu21dSensorDriver implements AutoCloseable {
      * @see #registerTemperatureSensor()
      * @see #registerHumiditySensor()
      */
-    public Htu21dSensorDriver(String bus, int address) throws IOException {
+    public Htu21dSensorDriver(final String bus, final int address) throws IOException {
         mDevice = new Htu21d(bus, address);
     }
 
@@ -60,11 +58,7 @@ public class Htu21dSensorDriver implements AutoCloseable {
         unregisterTemperatureSensor();
         unregisterHumiditySensor();
         if (mDevice != null) {
-            try {
-                mDevice.close();
-            } finally {
-                mDevice = null;
-            }
+            mDevice.close();
         }
     }
 
@@ -104,7 +98,6 @@ public class Htu21dSensorDriver implements AutoCloseable {
     public void unregisterTemperatureSensor() {
         if (mTemperatureUserDriver != null) {
             UserDriverManager.getManager().unregisterSensor(mTemperatureUserDriver.getUserSensor());
-            mTemperatureUserDriver = null;
         }
     }
 
@@ -114,7 +107,6 @@ public class Htu21dSensorDriver implements AutoCloseable {
     public void unregisterHumiditySensor() {
         if (mHumidityUserDriver != null) {
             UserDriverManager.getManager().unregisterSensor(mHumidityUserDriver.getUserSensor());
-            mHumidityUserDriver = null;
         }
     }
 
@@ -158,7 +150,7 @@ public class Htu21dSensorDriver implements AutoCloseable {
         }
 
         @Override
-        public void setEnabled(boolean enabled) throws IOException {
+        public void setEnabled(final boolean enabled) throws IOException {
             mEnabled = enabled;
         }
 
@@ -207,7 +199,7 @@ public class Htu21dSensorDriver implements AutoCloseable {
         }
 
         @Override
-        public void setEnabled(boolean enabled) throws IOException {
+        public void setEnabled(final boolean enabled) throws IOException {
             mEnabled = enabled;
         }
 
