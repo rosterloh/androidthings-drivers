@@ -1,34 +1,12 @@
 /**
  *  To publish on Maven local:
- *     ./gradlew -c [driverName]/publish-settings.gradle clean publishToMavenLocal
+ *     ./gradlew :[driverName]/:publishToMavenLocal
  *
  *  To publish on Bintray:
  *     - set environmental variables BINTRAY_USER and BINTRAY_API_KEY to proper values
- *     ./gradlew -c [driverName]/publish-settings.gradle clean bintrayUpload
+ *     ./gradlew :[driverName]/:bintrayUpload
  *
  */
-
-buildscript {
-    repositories {
-        jcenter()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.3'
-    }
-}
-
-plugins {
-    id 'com.jfrog.bintray' version '1.7.3'
-    id 'com.github.ben-manes.versions' version '0.15.0'
-}
-
-allprojects {
-    repositories {
-        jcenter()
-    }
-}
-
-apply from: 'build.gradle'
 apply plugin: 'maven-publish'
 
 task sourceJar(type: Jar) {
@@ -39,8 +17,8 @@ task sourceJar(type: Jar) {
 publishing {
     publications {
         driverPublish(MavenPublication) {
-            groupId 'com.rosterloh.things.driver'
-            artifactId "$project.name"
+            groupId 'com.rosterloh.things'
+            artifactId "driver-$project.name"
             version ARTIFACT_VERSION
             artifact sourceJar
             artifact("$buildDir/outputs/aar/$project.name-release.aar")
@@ -63,7 +41,7 @@ publishing {
 }
 
 publishToMavenLocal.dependsOn build
-bintrayUpload.dependsOn build
+//bintrayUpload.dependsOn build
 
 bintray {
   user = System.getenv('BINTRAY_USER')

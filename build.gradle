@@ -1,6 +1,7 @@
 buildscript {
     repositories {
         jcenter()
+        mavenLocal()
         maven { url 'https://maven.google.com' }
     }
     dependencies {
@@ -10,11 +11,13 @@ buildscript {
 
 plugins {
     id 'com.github.ben-manes.versions' version '0.15.0'
+    id 'com.jfrog.bintray' version '1.7.3'
 }
 
 allprojects {
     repositories {
         jcenter()
+        mavenLocal()
         maven { url 'https://maven.google.com' }
     }
 }
@@ -34,3 +37,4 @@ ext {
     hamcrestVersion = "1.3"
     mockitoVersion = "2.8.47"
 }
+
