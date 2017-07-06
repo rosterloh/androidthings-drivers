@@ -270,7 +270,7 @@ public class Htu21d implements AutoCloseable {
                 // msb[7:0] lsb[7:2]
                 final int msb = mBuffer[0] & 0xff;
                 final int lsb = mBuffer[1] & 0xfc;
-                return (msb << 8 | lsb) >> 2;
+                return (msb << 8 | lsb);
             } else {
                 throw new IOException("CRC check failed " + (((byte) crc) & 0xff) + " != " + (mBuffer[2] & 0xff));
             }
@@ -298,7 +298,7 @@ public class Htu21d implements AutoCloseable {
                     final int msb = mBuffer[0] & 0xff;
                     final int lsb = mBuffer[1] & 0xfc; // last 2 bits are status
                     // Convert to 14 bit integer
-                    return (msb << 8 | lsb) >> 2;
+                    return (msb << 8 | lsb);
                 } catch (IOException e) {
                     // "NACK" while device is converting the result
                 }
