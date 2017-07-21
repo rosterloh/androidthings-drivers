@@ -1,1 +1,1 @@
-include ':htu21d', ':ccs811'
+include ':htu21d', ':ccs811', ':bmx280', ':testingutils'

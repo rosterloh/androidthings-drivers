@@ -18,7 +18,7 @@ where `<version>` matches the last version of the driver available on [jcenter][
 
 ```
 dependencies {
-    compile 'com.rosterloh.things.driver.ccs811:<version>'
+    compile 'com.rosterloh.things:driver-ccs811:<version>'
 }
 ```
 
@@ -37,12 +37,15 @@ try {
     // couldn't configure the device...
 }
 
-// Read the current temperature:
+// Tell the sensor to start sampling
+mCcs811.setMode(Ccs811.MODE_60S)
+
+// Read the sensor values:
 
 try {
-    float temperature = mHtu21d.readTemperature();
+    int[] values = mCcs811.readAlgorithmResults();
 } catch (IOException e) {
-    // error reading temperature
+    // error sensor values
 }
 
 // Close the sensor when finished:
@@ -54,61 +57,5 @@ try {
 }
 ```
 
-If you need to read sensor values continuously, you can register the Htu21d with the system and
-listen for sensor values using the [Sensor APIs][sensors]:
-```java
-SensorManager mSensorManager = getSystemService(Context.SENSOR_SERVICE);
-SensorEventListener mListener = ...;
-Htu21dSensorDriver mSensorDriver;
-
-mSensorManager.registerDynamicSensorCallback(new SensorManager.DynamicSensorCallback() {
-    @Override
-    public void onDynamicSensorConnected(Sensor sensor) {
-        if (sensor.getType() == Sensor.TYPE_AMBIENT_TEMPERATURE) {
-            mSensorManager.registerListener(mListener, sensor,
-                    SensorManager.SENSOR_DELAY_NORMAL);
-        }
-    }
-});
-
-try {
-    mSensorDriver = new Htu21dSensorDriver(i2cBusName);
-    mSensorDriver.registerTemperatureSensor();
-} catch (IOException e) {
-    // Error configuring sensor
-}
-
-// Unregister and close the driver when finished:
-
-mSensorManager.unregisterListener(mListener);
-mSensorDriver.unregisterTemperatureSensor();
-try {
-    mSensorDriver.close();
-} catch (IOException e) {
-    // error closing sensor
-}
-```
-
-License
--------
-
-Copyright 2017 Google Inc.
-
-Licensed to the Apache Software Foundation (ASF) under one or more contributor
-license agreements.  See the NOTICE file distributed with this work for
-additional information regarding copyright ownership.  The ASF licenses this
-file to you under the Apache License, Version 2.0 (the "License"); you may not
-use this file except in compliance with the License.  You may obtain a copy of
-the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
-License for the specific language governing permissions and limitations under
-the License.
-
-[product_htu21d]: https://cdn.sparkfun.com/assets/learn_tutorials/1/4/3/CCS811_Datasheet-DS000459.pdf
-[jcenter]: https://bintray.com/google/androidthings/contrib-driver-htu21d/_latestVersion
-[sensors]: https://developer.android.com/guide/topics/sensors/sensors_overview.html
+[product_ccs811]: https://cdn.sparkfun.com/assets/learn_tutorials/1/4/3/CCS811_Datasheet-DS000459.pdf
+[jcenter]: https://bintray.com/google/androidthings/androidthings-driver-ccs811/_latestVersion

@@ -1,7 +1,8 @@
-HTU21D driver for Android Things
+BMX280 driver for Android Things
 ================================
 
-This driver supports TE Connectivity [HTU21D][product_htu21d] environmental sensor.
+This driver supports Bosch [BMP280][product_bmp280] and [BME280][product_bme280]
+environmental sensors.
 
 NOTE: these drivers are not production-ready. They are offered as sample
 implementations of Android Things user space drivers for common peripherals
@@ -13,26 +14,27 @@ How to use the driver
 
 ### Gradle dependency
 
-To use the `htu21d` driver, simply add the line below to your project's `build.gradle`,
+To use the `bmx280` driver, simply add the line below to your project's `build.gradle`,
 where `<version>` matches the last version of the driver available on [jcenter][jcenter].
 
 ```
 dependencies {
-    compile 'com.rosterloh.things.driver.htu21d:<version>'
+    compile 'com.rosterloh.things:driver-bmx280:<version>'
 }
 ```
 
 ### Sample usage
 
 ```java
-import com.rosterloh.things.driver.htu21d.Htu21d;
+import com.rosterloh.things.driver.bmx280.Bmx280;
 
 // Access the environmental sensor:
 
-Htu21d mHtu21d;
+Bmx280 mBmx280;
 
 try {
-    mHtu21d = new Htu21d(i2cBusName);
+    mBmx280 = new Bmx280(i2cBusName);
+    mBxm280.setTemperatureOversampling(Bmx280.OVERSAMPLING_1X);
 } catch (IOException e) {
     // couldn't configure the device...
 }
@@ -40,7 +42,7 @@ try {
 // Read the current temperature:
 
 try {
-    float temperature = mHtu21d.readTemperature();
+    float temperature = mBmx280.readTemperature();
 } catch (IOException e) {
     // error reading temperature
 }
@@ -48,18 +50,18 @@ try {
 // Close the environmental sensor when finished:
 
 try {
-    mHtu21d.close();
+    mBmx102.close();
 } catch (IOException e) {
     // error closing sensor
 }
 ```
 
-If you need to read sensor values continuously, you can register the Htu21d with the system and
+If you need to read sensor values continuously, you can register the Bmx280 with the system and
 listen for sensor values using the [Sensor APIs][sensors]:
 ```java
 SensorManager mSensorManager = getSystemService(Context.SENSOR_SERVICE);
 SensorEventListener mListener = ...;
-Htu21dSensorDriver mSensorDriver;
+Bmx280SensorDriver mSensorDriver;
 
 mSensorManager.registerDynamicSensorCallback(new SensorManager.DynamicSensorCallback() {
     @Override
@@ -72,7 +74,7 @@ mSensorManager.registerDynamicSensorCallback(new SensorManager.DynamicSensorCall
 });
 
 try {
-    mSensorDriver = new Htu21dSensorDriver(i2cBusName);
+    mSensorDriver = new Bmx280SensorDriver(i2cBusName);
     mSensorDriver.registerTemperatureSensor();
 } catch (IOException e) {
     // Error configuring sensor
@@ -89,6 +91,7 @@ try {
 }
 ```
 
-[product_htu21d]: http://www.te.com/usa-en/product-CAT-HSC0004.html
-[jcenter]: https://bintray.com/google/androidthings/contrib-driver-htu21d/_latestVersion
+[product_bmp280]: https://www.bosch-sensortec.com/bst/products/all_products/bmp280
+[product_bme280]: https://www.bosch-sensortec.com/bst/products/all_products/bme280
+[jcenter]: https://bintray.com/google/rosterloh/androidthings-driver-bmx280/_latestVersion
 [sensors]: https://developer.android.com/guide/topics/sensors/sensors_overview.html

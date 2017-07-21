@@ -1,10 +1,8 @@
 apply plugin: 'com.android.library'
 apply from: "$rootProject.projectDir/quality/quality.gradle"
-apply from: "$rootProject.projectDir/publish.gradle"
 
 def versionMajor = 0
 def versionMinor = 1
-
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -28,13 +26,6 @@ android {
 }
 
 dependencies {
-    implementation project(path: ':testingutils')
-    implementation "com.google.android.things:androidthings:$androidThingsVersion"
-    implementation "com.android.support:support-annotations:$supportLibVersion"
     testImplementation "junit:junit:$jUnitVersion"
-    testImplementation "org.hamcrest:hamcrest-library:$hamcrestVersion"
-    testImplementation "org.mockito:mockito-core:$mockitoVersion"
-    androidTestImplementation "com.android.support:support-annotations:$supportLibVersion"
-    androidTestImplementation "com.android.support.test:runner:0.5"
-    androidTestImplementation "com.android.support.test:rules:0.5"
+    implementation "org.hamcrest:hamcrest-core:$hamcrestVersion"
 }
