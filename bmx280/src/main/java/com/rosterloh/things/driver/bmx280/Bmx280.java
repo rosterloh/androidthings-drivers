@@ -107,7 +107,7 @@ public class Bmx280 implements AutoCloseable {
     private static final int BMX280_REG_HUM_CALIB_2 = 0xE1;
     private static final int BMX280_REG_HUM_CALIB_3 = 0xE3;
     private static final int BMX280_REG_HUM_CALIB_4 = 0xE4;
-    private static final int BMX280_REG_HUM_CALIB_6 = 0xE7;
+    private static final int BMX280_REG_HUM_CALIB_7 = 0xE7;
 
     private static final int BMX280_REG_ID = 0xD0;
     private static final int BMX280_REG_CTRL_HUM = 0xF2;
@@ -197,9 +197,9 @@ public class Bmx280 implements AutoCloseable {
         mPressureCalibrationData[8] = (short) mDevice.readRegWord(BMX280_REG_PRESS_CALIB_9);
         if (mChipId == CHIP_ID_BME280) {
             // Read humidity calibration data
-            mHumidityCalibrationData[0] = mDevice.readRegByte(BMX280_REG_HUM_CALIB_1) & 0xff;  // unsigned char
-            mHumidityCalibrationData[1] = (short) mDevice.readRegWord(BMX280_REG_HUM_CALIB_2); // signed short
-            mHumidityCalibrationData[2] = mDevice.readRegByte(BMX280_REG_HUM_CALIB_3) & 0xff;  // unsigned char
+            mHumidityCalibrationData[0] = mDevice.readRegByte(BMX280_REG_HUM_CALIB_1) & 0xff; // unsigned char
+            mHumidityCalibrationData[1] = mDevice.readRegWord(BMX280_REG_HUM_CALIB_2); // signed short
+            mHumidityCalibrationData[2] = mDevice.readRegByte(BMX280_REG_HUM_CALIB_3) & 0xff; // unsigned char
 
             synchronized (mBuffer) {
                 mDevice.readRegBuffer(BMX280_REG_HUM_CALIB_4, mBuffer, 3);
@@ -208,11 +208,11 @@ public class Bmx280 implements AutoCloseable {
                 int e5 = mBuffer[1] & 0xff;
                 int e6 = mBuffer[2] & 0xff;
                 // e4[0:7] e5[3:0]
-                mHumidityCalibrationData[3] = (e4 << 4) | (e5 & 0x0F);
+                mHumidityCalibrationData[3] = (e4 << 4) | (e5 & 0x0f);
                 // e5[7:4] e6[7:0]
-                mHumidityCalibrationData[4] = (e6 << 4) | (e5 & 0xF0);
+                mHumidityCalibrationData[4] = ((e5 & 0xf0) << 4) | e6;
             }
-            mHumidityCalibrationData[5] = mDevice.readRegByte(BMX280_REG_HUM_CALIB_6);         // signed char
+            mHumidityCalibrationData[5] = mDevice.readRegByte(BMX280_REG_HUM_CALIB_7); // signed char
         }
     }
 
@@ -539,15 +539,15 @@ public class Bmx280 implements AutoCloseable {
         int digH6 = calibration[5];
 
         float adcH = (float) rawHum;
-        float varH = fineTemperature - 76800.0f;
-        varH = (adcH - (((float) digH4) * 64.0f + ((float) digH5) / 16384.0f * varH))
-                * (((float) digH2) / 65536.0f * (1.0f + ((float) digH6) / 67108864.0f * varH
-                * (1.0f + ((float) digH3) / 67108864.0f * varH)));
-        varH = varH * (1.0f - ((float) digH1) * varH / 524288.0f);
-        if (varH > 100.0f)
+        float varH = fineTemperature - 76800f;
+        varH = (adcH - (((float) digH4) * 64f + ((float) digH5) / 16384f * varH))
+                * (((float) digH2) / 65536f * (1f + ((float) digH6) / 67108864f * varH
+                * (1f + ((float) digH3) / 67108864f * varH)));
+        varH = varH * (1f - ((float) digH1) * varH / 524288f);
+        if (varH > 100)
             varH = 100.0f;
-        else if (varH < 0.0f)
-            varH = 0.0f;
+        else if (varH < 0)
+            varH = 0f;
         return varH;
     }
 }

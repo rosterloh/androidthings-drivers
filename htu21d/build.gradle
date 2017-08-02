@@ -34,6 +34,6 @@ dependencies {
     testImplementation "org.hamcrest:hamcrest-library:$hamcrestVersion"
     testImplementation "org.mockito:mockito-core:$mockitoVersion"
     androidTestImplementation "com.android.support:support-annotations:$supportLibVersion"
-    androidTestImplementation "com.android.support.test:runner:0.5"
-    androidTestImplementation "com.android.support.test:rules:0.5"
+    androidTestImplementation "com.android.support.test:runner:$runnerRulesVersion"
+    androidTestImplementation "com.android.support.test:rules:$runnerRulesVersion"
 }

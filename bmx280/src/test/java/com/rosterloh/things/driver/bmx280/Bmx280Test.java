@@ -26,12 +26,15 @@ public class Bmx280Test {
     // (https://ae-bst.resource.bosch.com/media/_tech/media/datasheets/BST-BMP280-DS001-18.pdf page 23)
     private static final int[] TEMP_CALIBRATION = {27504, 26435, -1000};
     private static final int[] PRESSURE_CALIBRATION = {36477, -10685, 3024, 2855, 140, -7, 15500, -14600, 6000};
+    private static final int[] HUMIDITY_CALIBRATION = {75, 356, 0, 333, 0, 30};
     private static final int RAW_TEMPERATURE = 519888;
     private static final int RAW_PRESSURE = 415148;
+    private static final int RAW_HUMIDITY = 34345;
 
     private static final float EXPECTED_TEMPERATURE = 25.08f;
     private static final float EXPECTED_FINE_TEMPERATURE = 128422.0f;
     private static final float EXPECTED_PRESSURE = 1006.5327f;
+    private static final float EXPECTED_HUMIDITY = 71.68f;
     // Note: the datasheet points out that the calculated values can differ slightly because of
     // rounding. We'll check that the results are within a tolerance of 0.1%
     private static final float TOLERANCE = .001f;
@@ -59,6 +62,14 @@ public class Bmx280Test {
         final float pressure = Bmx280.compensatePressure(RAW_PRESSURE, tempResults[1],
                 PRESSURE_CALIBRATION);
         Assert.assertEquals(pressure, EXPECTED_PRESSURE, EXPECTED_PRESSURE * TOLERANCE);
+    }
+
+    @Test
+    public void testCompensateHumidity() {
+        final float[] tempResults = Bmx280.compensateTemperature(RAW_TEMPERATURE, TEMP_CALIBRATION);
+        final float humidity = Bmx280.compensateHumidity(RAW_HUMIDITY, tempResults[1],
+                HUMIDITY_CALIBRATION);
+        Assert.assertEquals(humidity, EXPECTED_HUMIDITY, EXPECTED_HUMIDITY * TOLERANCE);
     }
 
     @Test

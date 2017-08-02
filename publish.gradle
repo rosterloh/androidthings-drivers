@@ -53,12 +53,16 @@ bintray {
   pkg {
     repo = 'rosterloh'
     name = "androidthings-driver-$project.name"
+    licenses = ['MIT']
+    websiteUrl = 'https://github.com/rosterloh/androidthings-drivers'
+    vcsUrl = 'https://github.com/rosterloh/androidthings-drivers.git'
+    githubRepo = 'rosterloh/androidthings-drivers'
+    githubReleaseNotesFile = 'README.md'
 
     version {
       name = ARTIFACT_VERSION
-      gpg {
-        sign = true
-      }
+      desc = TYPE
+      released  = new Date()
     }
   }
 }

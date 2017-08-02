@@ -55,7 +55,7 @@ public class Ccs811 implements AutoCloseable {
     private static final int CCS811_STATUS_FW_MODE_BITSHIFT = 7;
 
     private I2cDevice mDevice;
-    private final byte[] mBuffer = new byte[4];
+    private final byte[] mBuffer = new byte[8];
     private int mChipId;
     private int mMode;
 
@@ -212,7 +212,7 @@ public class Ccs811 implements AutoCloseable {
         try {
             synchronized (mBuffer) {
                 mDevice.readRegBuffer(CCS811_FW_BOOT_VERSION, mBuffer, 2);
-                final int major = (mBuffer[0] & 0xf0);
+                final int major = (mBuffer[0] & 0xf0) >> 4;
                 final int minor = (mBuffer[0] & 0x0f);
                 final int trivial = (mBuffer[1] & 0xff);
                 return major + "." + minor + "." + trivial;
@@ -229,7 +229,7 @@ public class Ccs811 implements AutoCloseable {
         try {
             synchronized (mBuffer) {
                 mDevice.readRegBuffer(CCS811_FW_APP_VERSION, mBuffer, 2);
-                final int major = (mBuffer[0] & 0xf0);
+                final int major = (mBuffer[0] & 0xf0) >> 4;
                 final int minor = (mBuffer[0] & 0x0f);
                 final int trivial = (mBuffer[1] & 0xff);
                 return major + "." + minor + "." + trivial;
@@ -251,10 +251,10 @@ public class Ccs811 implements AutoCloseable {
         }
 
         synchronized (mBuffer) {
-            mDevice.readRegBuffer(CCS811_ALG_RESULT_DATA, mBuffer, 4);
+            mDevice.readRegBuffer(CCS811_ALG_RESULT_DATA, mBuffer, 8);
             final int eCO2 = ((mBuffer[0] & 0xff) << 8) | (mBuffer[1] & 0xff);
             final int tVOC = ((mBuffer[2] & 0xff) << 8) | (mBuffer[3] & 0xff);
-            return new int[]{eCO2, tVOC};
+            return new int[]{eCO2, tVOC, mBuffer[4], mBuffer[5]};
         }
     }
 }
