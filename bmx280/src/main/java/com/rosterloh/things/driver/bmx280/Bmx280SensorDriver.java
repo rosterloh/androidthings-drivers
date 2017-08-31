@@ -61,6 +61,7 @@ public class Bmx280SensorDriver implements AutoCloseable {
     public void close() throws IOException {
         unregisterTemperatureSensor();
         unregisterPressureSensor();
+        unregisterHumiditySensor();
         if (mDevice != null) {
             try {
                 mDevice.close();
@@ -270,7 +271,7 @@ public class Bmx280SensorDriver implements AutoCloseable {
         private UserSensor getUserSensor() {
             if (mUserSensor == null) {
                 mUserSensor = new UserSensor.Builder()
-                        .setType(Sensor.TYPE_PRESSURE)
+                        .setType(Sensor.TYPE_RELATIVE_HUMIDITY)
                         .setName(DRIVER_NAME)
                         .setVendor(DRIVER_VENDOR)
                         .setVersion(DRIVER_VERSION)
@@ -289,7 +290,7 @@ public class Bmx280SensorDriver implements AutoCloseable {
 
         @Override
         public UserSensorReading read() throws IOException {
-            return new UserSensorReading(new float[]{mDevice.readPressure()});
+            return new UserSensorReading(new float[]{mDevice.readHumidity()});
         }
 
         @Override

@@ -1,9 +1,8 @@
 apply plugin: 'com.android.library'
-apply from: "$rootProject.projectDir/quality/quality.gradle"
-apply from: "$rootProject.projectDir/publish.gradle"
 
 def versionMajor = 0
 def versionMinor = 1
+
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion

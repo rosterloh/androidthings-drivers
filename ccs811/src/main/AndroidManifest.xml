@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.rosterloh.things.driver.ccs811" >
     <application>
-        <uses-library android:name="com.google.android.things"/>
+        <uses-library android:required="false" android:name="com.google.android.things"/>
     </application>
 </manifest>
