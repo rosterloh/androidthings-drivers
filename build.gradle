@@ -45,10 +45,9 @@ subprojects {
 
     afterEvaluate {
         check.dependsOn 'checkstyle', 'findbugs'/*, 'pmd'*/, 'lint'
-   }
+    }
 }
 
-apply from: 'quality/jacoco.gradle'
 
 def isPublishing = hasProperty "PUBLISHING"
 if (isPublishing) {
