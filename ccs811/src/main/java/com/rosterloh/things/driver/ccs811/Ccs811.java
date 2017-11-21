@@ -1,6 +1,7 @@
 package com.rosterloh.things.driver.ccs811;
 
 import android.support.annotation.IntDef;
+import android.support.annotation.VisibleForTesting;
 
 import com.google.android.things.pio.I2cDevice;
 import com.google.android.things.pio.PeripheralManagerService;
@@ -100,6 +101,9 @@ public class Ccs811 implements AutoCloseable {
     private void connect(final I2cDevice device) throws IOException {
         mDevice = device;
 
+        softReset();
+        delay(100);
+
         mChipId = mDevice.readRegByte(CCS811_HW_ID);
 
         int status = getStatus();
@@ -110,6 +114,7 @@ public class Ccs811 implements AutoCloseable {
             // Application start. Used to transition the CCS811 state from boot to application mode,
             // a write with no data is required.
             mDevice.write(new byte[]{(byte) CCS811_START_APP}, 1);
+            delay(100);
         } else {
             throw new IOException("CCS811 app not valid");
         }
@@ -153,6 +158,19 @@ public class Ccs811 implements AutoCloseable {
     }
 
     /**
+     * Convenience method, just in case my threading strategy changes.
+     *
+     * @param ms time in ms to wait.
+     */
+    private void delay(int ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            //
+        }
+    }
+
+    /**
      * Set the measurement mode of the sensor.
      * @param mode measurement mode.
      * @throws IOException if mode set fails
@@ -178,7 +196,8 @@ public class Ccs811 implements AutoCloseable {
         return mMode;
     }
 
-    private int getStatus() throws IOException, IllegalStateException {
+    @VisibleForTesting
+    int getStatus() throws IOException, IllegalStateException {
         if (mDevice == null) {
             throw new IllegalStateException("I2C device not open");
         }
@@ -186,7 +205,8 @@ public class Ccs811 implements AutoCloseable {
         return mDevice.readRegByte(CCS811_STATUS) & 0xff;
     }
 
-    private String getError() throws IOException {
+    @VisibleForTesting
+    String getError() throws IOException {
         if (mDevice == null) {
             throw new IllegalStateException("I2C device not open");
         }

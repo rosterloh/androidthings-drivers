@@ -5,13 +5,13 @@ buildscript {
         mavenLocal()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.0.0-beta3'
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
+        classpath 'com.android.tools.build:gradle:3.1.0-alpha04'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.0'
     }
 }
 
 plugins {
-    id 'com.github.ben-manes.versions' version '0.15.0'
+    id 'com.github.ben-manes.versions' version '0.17.0'
 }
 
 allprojects {
@@ -27,15 +27,15 @@ task clean(type: Delete) {
 }
 
 ext {
-    compileSdkVersion = 26
-    buildToolsVersion = "26.0.1"
+    compileSdkVersion = 27
+    buildToolsVersion = "27.0.1"
     minSdkVersion = 24
-    targetSdkVersion = 26
+    targetSdkVersion = 27
     androidThingsVersion = "0.5.1-devpreview"
-    supportLibVersion = "26.0.2"
+    supportLibVersion = "27.0.1"
     jUnitVersion = "4.12"
     hamcrestVersion = "1.3"
-    mockitoVersion = "2.9.0"
+    mockitoVersion = "2.12.0"
     espressoVersion = "3.0.1"
     runnerRulesVersion = "1.0.1"
 }
