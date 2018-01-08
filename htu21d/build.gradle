@@ -5,7 +5,6 @@ def versionMinor = 1
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
-    buildToolsVersion rootProject.ext.buildToolsVersion
     defaultConfig {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
@@ -26,8 +25,9 @@ android {
 }
 
 dependencies {
-    implementation "com.google.android.things:androidthings:$androidThingsVersion"
+    compileOnly "com.google.android.things:androidthings:$androidThingsVersion"
     implementation "com.android.support:support-annotations:$supportLibVersion"
+    testImplementation "com.google.android.things:androidthings:$androidThingsVersion"
     testImplementation "junit:junit:$jUnitVersion"
     testImplementation "org.hamcrest:hamcrest-library:$hamcrestVersion"
     testImplementation "org.mockito:mockito-core:$mockitoVersion"
